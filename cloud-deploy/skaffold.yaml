@@ -19,7 +19,7 @@ profiles:
       helm:
         releases:
           - name: whereami
-            chartPath: workspace/source/chart
+            chartPath: /workspace/source/chart
             namespace: default
             setValueTemplates:
               clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
@@ -28,7 +28,7 @@ profiles:
       helm:
         releases:
           - name: whereami
-            chartPath: workspace/source/chart
+            chartPath: /workspace/source/chart
             namespace: default
             setValueTemplates:
               clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
@@ -72,11 +72,10 @@ customActions:
             echo "Helm version: $(helm version --short)"
             
             # Render
-            cd /workspace/source
             mkdir -p /workspace/output
             echo "Running skaffold render with profile: ${profile}"
             skaffold render \
-              --filename=skaffold.yaml \
+              --filename=/workspace/source/skaffold.yaml \
               --profile=${profile} \
               --output=/workspace/output/manifest.yaml \
               --offline=true \
