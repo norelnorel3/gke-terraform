@@ -8,8 +8,8 @@ deploy:
       - name: whereami
         chartPath: /workspace/source/chart
         namespace: default
-        setValues:
-          clusterType: "unknown"
+        setValueTemplates:
+          clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
 profiles:
   - name: config
     deploy:
@@ -18,8 +18,8 @@ profiles:
           - name: whereami
             chartPath: /workspace/source/chart
             namespace: default
-            setValues:
-              clusterType: '{{.CLOUD_DEPLOY_clusterType}}'
+            setValueTemplates:
+              clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
   - name: member
     deploy:
       helm:
@@ -27,5 +27,5 @@ profiles:
           - name: whereami
             chartPath: /workspace/source/chart
             namespace: default
-            setValues:
-              clusterType: '{{.CLOUD_DEPLOY_clusterType}}'
+            setValueTemplates:
+              clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"

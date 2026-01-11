@@ -12,7 +12,7 @@ resource "google_clouddeploy_target" "cluster" {
   }
 
   deploy_parameters = {
-    "clusterType" = each.key == "config" ? "config" : "member"
+    "ClusterType" = each.key == "config" ? "config" : "member"
   }
 
   require_approval = false
