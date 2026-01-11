@@ -39,8 +39,8 @@ customActions:
   - name: render-helm
     containers:
       - name: render
-        image: us-central1-docker.pkg.dev/cd-image-prod/cd-image/cd
-        command: ["/bin/bash", "-c"]
+        image: gcr.io/k8s-skaffold/skaffold:v2.16.1
+        command: ["/bin/sh", "-c"]
         args:
           - |
             echo "=== Deploy Parameters ==="
@@ -61,7 +61,7 @@ customActions:
   - name: deploy-gke
     containers:
       - name: deploy
-        image: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+        image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
         command: ["/bin/bash", "-c"]
         args:
           - |
