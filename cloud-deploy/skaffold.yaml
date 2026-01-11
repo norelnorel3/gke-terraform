@@ -8,8 +8,8 @@ deploy:
       - name: whereami
         chartPath: /workspace/source/chart
         namespace: default
-        # Cloud Deploy passes deployParameters via --set flag directly to Helm
-        # No setValueTemplates needed - the --set="clusterType=config" is automatic
+        setValues:
+          clusterType: "unknown"
 profiles:
   - name: config
     deploy:
@@ -18,7 +18,8 @@ profiles:
           - name: whereami
             chartPath: /workspace/source/chart
             namespace: default
-
+            setValues:
+              clusterType: "unknown"
   - name: member
     deploy:
       helm:
@@ -26,3 +27,5 @@ profiles:
           - name: whereami
             chartPath: /workspace/source/chart
             namespace: default
+            setValues:
+              clusterType: "unknown"
