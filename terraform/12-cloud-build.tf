@@ -81,9 +81,24 @@ resource "google_project_iam_member" "cloudbuild_logs" {
   member  = "serviceAccount:${google_service_account.cloudbuild.email}"
 }
 
+# Grant Cloud Build SA permission to manage storage (for Cloud Deploy artifacts)
+resource "google_project_iam_member" "cloudbuild_storage" {
+  project = local.project_id
+  role    = "roles/storage.admin"
+  member  = "serviceAccount:${google_service_account.cloudbuild.email}"
+}
+
 # Grant Cloud Build SA permission to act as itself
 resource "google_service_account_iam_member" "cloudbuild_sa_user" {
   service_account_id = google_service_account.cloudbuild.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.cloudbuild.email}"
+}
+
+# Grant Cloud Build SA permission to act as the Compute service account
+# (Cloud Deploy uses this SA to deploy to GKE)
+resource "google_service_account_iam_member" "cloudbuild_actas_compute" {
+  service_account_id = "projects/${local.project_id}/serviceAccounts/${data.google_project.project.number}-compute@developer.gserviceaccount.com"
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${google_service_account.cloudbuild.email}"
 }

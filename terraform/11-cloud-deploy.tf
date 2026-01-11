@@ -82,6 +82,17 @@ resource "google_project_iam_member" "clouddeploy_container_developer" {
   ]
 }
 
+# IAM: Grant Cloud Deploy service account permission to write logs
+resource "google_project_iam_member" "clouddeploy_logs" {
+  project = local.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.api
+  ]
+}
+
 # IAM: Grant Cloud Deploy service account to act as itself
 resource "google_service_account_iam_member" "clouddeploy_service_account_user" {
   service_account_id = "projects/${local.project_id}/serviceAccounts/${data.google_project.project.number}-compute@developer.gserviceaccount.com"
