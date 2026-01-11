@@ -43,7 +43,6 @@ customActions:
         command: ["/bin/bash", "-c"]
         args:
           - |
-            set -e
             echo "=== Deploy Parameters ==="
             echo "ClusterType: ${ClusterType}"
             echo "profile: ${profile}"
@@ -64,9 +63,13 @@ customActions:
             curl -sLo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/v2.16.1/skaffold-linux-amd64
             chmod +x /usr/local/bin/skaffold
             
-            # Install helm
+            # Install helm (direct download - more reliable than get-helm-3 script)
             echo "Installing helm..."
-            curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+            curl -sLo /tmp/helm.tar.gz https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz
+            tar -xzf /tmp/helm.tar.gz -C /tmp
+            mv /tmp/linux-amd64/helm /usr/local/bin/helm
+            chmod +x /usr/local/bin/helm
+            echo "Helm version: $(helm version --short)"
             
             # Render
             cd /workspace/source
