@@ -79,7 +79,8 @@ customActions:
               --profile=${profile} \
               --output=/workspace/output/manifest.yaml \
               --offline=true \
-              --digest-source=none
+              --digest-source=none \
+              --set clusterType=${ClusterType}
             
             echo "=== Rendered Manifest ==="
             cat /workspace/output/manifest.yaml
