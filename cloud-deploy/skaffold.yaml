@@ -8,10 +8,9 @@ deploy:
       - name: whereami
         chartPath: /workspace/source/chart
         namespace: default
-        setValueTemplates:
-          clusterType: "{{.CLOUD_DEPLOY_clusterType}}"
+        # Cloud Deploy passes deployParameters via --set flag directly to Helm
+        # No setValueTemplates needed - the --set="clusterType=config" is automatic
 profiles:
-  # Profile for config cluster
   - name: config
     deploy:
       helm:
@@ -19,10 +18,7 @@ profiles:
           - name: whereami
             chartPath: /workspace/source/chart
             namespace: default
-            # Read ClusterType from Cloud Deploy's deployParameters (not hardcoded)
-            setValueTemplates:
-              clusterType: "{{.CLOUD_DEPLOY_clusterType}}"
-  # Profile for member cluster
+
   - name: member
     deploy:
       helm:
@@ -30,6 +26,3 @@ profiles:
           - name: whereami
             chartPath: /workspace/source/chart
             namespace: default
-            # Read ClusterType from Cloud Deploy's deployParameters (not hardcoded)
-            setValueTemplates:
-              clusterType: "{{.CLOUD_DEPLOY_clusterType}}"
