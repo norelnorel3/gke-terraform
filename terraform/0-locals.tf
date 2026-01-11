@@ -14,8 +14,13 @@ locals {
     "multiclusteringress.googleapis.com",
     "trafficdirector.googleapis.com",
     "dns.googleapis.com",
-    "clouddeploy.googleapis.com"
+    "clouddeploy.googleapis.com",
+    "cloudbuild.googleapis.com"
   ]
+
+  # GitHub repository configuration
+  github_owner = "norelnorel3"
+  github_repo  = "gke-terraform"
 
   # Config cluster for multi-cluster gateway (first cluster will be the config cluster)
   config_cluster_key = "cluster1"

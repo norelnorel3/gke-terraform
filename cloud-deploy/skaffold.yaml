@@ -8,12 +8,10 @@ deploy:
       - name: whereami
         chartPath: ./chart
         namespace: default
-        # Cloud Deploy parameters are passed via CLOUD_DEPLOY_* env vars
-        # They get converted to setValues automatically
         setValueTemplates:
-          clusterType: "{{.CLUSTER_TYPE}}"
+          clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
 profiles:
-  # Profile for config cluster - deploys HTTPRoute
+  # Profile for config cluster
   - name: config
     deploy:
       helm:
@@ -21,9 +19,10 @@ profiles:
           - name: whereami
             chartPath: ./chart
             namespace: default
-            setValues:
-              clusterType: config
-  # Profile for member cluster - no HTTPRoute
+            # Read ClusterType from Cloud Deploy's deployParameters (not hardcoded)
+            setValueTemplates:
+              clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
+  # Profile for member cluster
   - name: member
     deploy:
       helm:
@@ -31,5 +30,6 @@ profiles:
           - name: whereami
             chartPath: ./chart
             namespace: default
-            setValues:
-              clusterType: member
+            # Read ClusterType from Cloud Deploy's deployParameters (not hardcoded)
+            setValueTemplates:
+              clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
