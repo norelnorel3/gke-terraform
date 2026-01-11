@@ -1,0 +1,19 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: whereami-route
+  namespace: default
+spec:
+  parentRefs:
+  - name: external-http
+    namespace: default
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - group: net.gke.io
+      kind: ServiceImport
+      name: whereami
+      port: 8080

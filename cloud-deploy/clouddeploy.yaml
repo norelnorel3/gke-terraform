@@ -1,0 +1,33 @@
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+  name: multi-cluster-app
+description: Pipeline for deploying to multi-cluster GKE environment
+serialPipeline:
+  stages:
+    # Deploy to config cluster first (has HTTPRoute)
+    - targetId: config-cluster
+      profiles: [config]
+    # Then deploy to member cluster (no HTTPRoute)
+    - targetId: member-cluster
+      profiles: [member]
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: config-cluster
+description: Config cluster (demo-cluster-1) - deploys HTTPRoute
+gke:
+  cluster: projects/norel-project-480112/locations/us-central1-a/clusters/demo-cluster-1
+deployParameters:
+  ClusterType: config
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: member-cluster
+description: Member cluster (demo-cluster-2) - no HTTPRoute
+gke:
+  cluster: projects/norel-project-480112/locations/us-central1-b/clusters/demo-cluster-2
+deployParameters:
+  ClusterType: member

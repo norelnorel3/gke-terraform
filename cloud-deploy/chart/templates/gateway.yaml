@@ -1,0 +1,22 @@
+{{/*
+  Gateway is only deployed when clusterType is "config"
+  This is a one-time resource - subsequent deployments will just update it
+*/}}
+{{- if eq .Values.clusterType "config" }}
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ .Values.gateway.name }}
+  namespace: {{ .Values.gateway.namespace }}
+spec:
+  gatewayClassName: gke-l7-global-external-managed-mc
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+        namespaces:
+          from: All
+{{- end }}

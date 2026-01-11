@@ -1,0 +1,26 @@
+{{/*
+  HTTPRoute is only deployed when clusterType is "config"
+  This ensures the route is only created on the config cluster
+  for multi-cluster gateway
+*/}}
+{{- if eq .Values.clusterType "config" }}
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: {{ .Release.Name }}-route
+  namespace: {{ .Release.Namespace }}
+spec:
+  parentRefs:
+    - name: {{ .Values.gateway.name }}
+      namespace: {{ .Values.gateway.namespace }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: net.gke.io
+          kind: ServiceImport
+          name: {{ .Release.Name }}
+          port: {{ .Values.service.port }}
+{{- end }}

@@ -1,0 +1,22 @@
+# Default values for whereami
+# ClusterType will be overridden by Cloud Deploy parameters
+# Do NOT set clusterType here - it comes from Cloud Deploy
+
+replicaCount: 2
+
+image:
+  repository: us-docker.pkg.dev/google-samples/containers/gke/whereami
+  tag: v1.2.22
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8080
+
+# Gateway configuration (only used when clusterType is "config")
+gateway:
+  name: external-http
+  namespace: default
+
+# ServiceExport is created on all clusters
+serviceExport:
+  enabled: true

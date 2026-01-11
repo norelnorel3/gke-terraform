@@ -1,0 +1,35 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: multi-cluster-app
+deploy:
+  helm:
+    releases:
+      - name: whereami
+        chartPath: ./chart
+        namespace: default
+        # Cloud Deploy parameters are passed via CLOUD_DEPLOY_* env vars
+        # They get converted to setValues automatically
+        setValueTemplates:
+          clusterType: "{{.CLUSTER_TYPE}}"
+profiles:
+  # Profile for config cluster - deploys HTTPRoute
+  - name: config
+    deploy:
+      helm:
+        releases:
+          - name: whereami
+            chartPath: ./chart
+            namespace: default
+            setValues:
+              clusterType: config
+  # Profile for member cluster - no HTTPRoute
+  - name: member
+    deploy:
+      helm:
+        releases:
+          - name: whereami
+            chartPath: ./chart
+            namespace: default
+            setValues:
+              clusterType: member
