@@ -19,7 +19,7 @@ profiles:
             chartPath: /workspace/source/chart
             namespace: default
             setValues:
-              clusterType: "unknown"
+              clusterType: '{{.CLOUD_DEPLOY_clusterType}}'
   - name: member
     deploy:
       helm:
@@ -28,4 +28,4 @@ profiles:
             chartPath: /workspace/source/chart
             namespace: default
             setValues:
-              clusterType: "unknown"
+              clusterType: '{{.CLOUD_DEPLOY_clusterType}}'

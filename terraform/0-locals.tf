@@ -37,4 +37,30 @@ locals {
       location = "us-central1-b"
     }
   }
+
+  # Cloud Deploy targets map - used for creating target resources
+  # clusterType is derived from the key: "config" -> "config", anything else -> "member"
+  deploy_targets = {
+    config = {
+      cluster_key = "cluster1"
+      profile     = "config"
+    }
+    member = {
+      cluster_key = "cluster2"
+      profile     = "member"
+    }
+  }
+
+  # Ordered list for pipeline stages - ORDER MATTERS for serial pipeline
+  # Config cluster must deploy first (Gateway/HTTPRoute), then member clusters
+  deploy_stages = [
+    {
+      key     = "config"
+      profile = "config"
+    },
+    {
+      key     = "member"
+      profile = "member"
+    }
+  ]
 }

@@ -1,3 +1,29 @@
+# Cloud Deploy Targets - using for_each loop
+resource "google_clouddeploy_target" "cluster" {
+  for_each = local.deploy_targets
+
+  name        = "${each.key}-cluster"
+  location    = local.region
+  project     = local.project_id
+  description = "${title(each.key)} cluster (${local.clusters[each.value.cluster_key].name})"
+
+  gke {
+    cluster = "projects/${local.project_id}/locations/${local.clusters[each.value.cluster_key].location}/clusters/${local.clusters[each.value.cluster_key].name}"
+  }
+
+  deploy_parameters = {
+    "clusterType" = each.key == "config" ? "config" : "member"
+  }
+
+  require_approval = false
+
+  depends_on = [
+    google_project_service.api,
+    google_container_cluster.gke,
+    google_container_node_pool.general
+  ]
+}
+
 # Cloud Deploy Delivery Pipeline for Multi-Cluster Deployment
 resource "google_clouddeploy_delivery_pipeline" "multi_cluster_app" {
   name        = "multi-cluster-app"
@@ -6,68 +32,21 @@ resource "google_clouddeploy_delivery_pipeline" "multi_cluster_app" {
   description = "Pipeline for deploying to multi-cluster GKE environment"
 
   serial_pipeline {
-    stages {
-      target_id = google_clouddeploy_target.config_cluster.name
-      profiles  = ["config"]
+    # Dynamic stages - order is defined in local.deploy_stages list
+    dynamic "stages" {
+      for_each = local.deploy_stages
+      content {
+        target_id = google_clouddeploy_target.cluster[stages.value.key].name
+        profiles  = [stages.value.profile]
+      }
     }
-    stages {
-      target_id = google_clouddeploy_target.member_cluster.name
-      profiles  = ["member"]
-    }
   }
 
   depends_on = [
     google_project_service.api,
     google_container_cluster.gke,
-    google_container_node_pool.general
-  ]
-}
-
-# Target for Config Cluster (deploys Gateway and HTTPRoute)
-resource "google_clouddeploy_target" "config_cluster" {
-  name        = "config-cluster"
-  location    = local.region
-  project     = local.project_id
-  description = "Config cluster (${local.clusters[local.config_cluster_key].name}) - deploys Gateway and HTTPRoute"
-
-  gke {
-    cluster = "projects/${local.project_id}/locations/${local.clusters[local.config_cluster_key].location}/clusters/${local.clusters[local.config_cluster_key].name}"
-  }
-
-  deploy_parameters = {
-    "clusterType" = "config"
-  }
-
-  require_approval = false
-
-  depends_on = [
-    google_project_service.api,
-    google_container_cluster.gke,
-    google_container_node_pool.general
-  ]
-}
-
-# Target for Member Cluster (no Gateway/HTTPRoute)
-resource "google_clouddeploy_target" "member_cluster" {
-  name        = "member-cluster"
-  location    = local.region
-  project     = local.project_id
-  description = "Member cluster (${local.clusters["cluster2"].name}) - no Gateway/HTTPRoute"
-
-  gke {
-    cluster = "projects/${local.project_id}/locations/${local.clusters["cluster2"].location}/clusters/${local.clusters["cluster2"].name}"
-  }
-
-  deploy_parameters = {
-    "clusterType" = "member"
-  }
-
-  require_approval = false
-
-  depends_on = [
-    google_project_service.api,
-    google_container_cluster.gke,
-    google_container_node_pool.general
+    google_container_node_pool.general,
+    google_clouddeploy_target.cluster
   ]
 }
 
@@ -121,14 +100,9 @@ output "cloud_deploy_pipeline" {
   value       = google_clouddeploy_delivery_pipeline.multi_cluster_app.name
 }
 
-output "cloud_deploy_config_target" {
-  description = "Cloud Deploy config cluster target"
-  value       = google_clouddeploy_target.config_cluster.name
-}
-
-output "cloud_deploy_member_target" {
-  description = "Cloud Deploy member cluster target"
-  value       = google_clouddeploy_target.member_cluster.name
+output "cloud_deploy_targets" {
+  description = "Cloud Deploy targets"
+  value       = { for k, v in google_clouddeploy_target.cluster : k => v.name }
 }
 
 output "cloud_deploy_create_release_command" {
