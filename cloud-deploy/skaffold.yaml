@@ -6,7 +6,7 @@ deploy:
   helm:
     releases:
       - name: whereami
-        chartPath: ./chart
+        chartPath: /workspace/source//chart
         namespace: default
         setValueTemplates:
           clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
@@ -17,7 +17,7 @@ profiles:
       helm:
         releases:
           - name: whereami
-            chartPath: ./chart
+            chartPath: /workspace/source/chart
             namespace: default
             # Read ClusterType from Cloud Deploy's deployParameters (not hardcoded)
             setValueTemplates:
@@ -28,7 +28,7 @@ profiles:
       helm:
         releases:
           - name: whereami
-            chartPath: ./chart
+            chartPath: /workspace/source/chart
             namespace: default
             # Read ClusterType from Cloud Deploy's deployParameters (not hardcoded)
             setValueTemplates:
