@@ -6,7 +6,7 @@ deploy:
   helm:
     releases:
       - name: whereami
-        chartPath: /workspace/source//chart
+        chartPath: /workspace/source/chart
         namespace: default
         setValueTemplates:
           clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
