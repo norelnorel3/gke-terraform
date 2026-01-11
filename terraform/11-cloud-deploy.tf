@@ -1,4 +1,22 @@
-# Cloud Deploy Targets - using for_each loop
+# Custom Target Type for GKE with Helm
+# This allows deploy_parameters to be available as CLOUD_DEPLOY_* env vars
+resource "google_clouddeploy_custom_target_type" "gke_helm" {
+  name        = "gke-helm-target"
+  location    = local.region
+  project     = local.project_id
+  description = "Custom target type for GKE with Helm - exposes deploy_parameters as env vars"
+
+  custom_actions {
+    render_action = "render-helm"
+    deploy_action = "deploy-gke"
+  }
+
+  depends_on = [
+    google_project_service.api
+  ]
+}
+
+# Cloud Deploy Targets - using custom target type
 resource "google_clouddeploy_target" "cluster" {
   for_each = local.deploy_targets
 
@@ -7,12 +25,18 @@ resource "google_clouddeploy_target" "cluster" {
   project     = local.project_id
   description = "${title(each.key)} cluster (${local.clusters[each.value.cluster_key].name})"
 
-  gke {
-    cluster = "projects/${local.project_id}/locations/${local.clusters[each.value.cluster_key].location}/clusters/${local.clusters[each.value.cluster_key].name}"
+  # Use custom target instead of GKE target
+  custom_target {
+    custom_target_type = google_clouddeploy_custom_target_type.gke_helm.id
   }
 
+  # These parameters become CLOUD_DEPLOY_* env vars in custom actions
   deploy_parameters = {
-    "ClusterType" = each.key == "config" ? "config" : "member"
+    "ClusterType"      = each.key == "config" ? "config" : "member"
+    "profile"          = each.value.profile
+    "cluster_name"     = local.clusters[each.value.cluster_key].name
+    "cluster_location" = local.clusters[each.value.cluster_key].location
+    "project"          = local.project_id
   }
 
   require_approval = false
@@ -20,7 +44,8 @@ resource "google_clouddeploy_target" "cluster" {
   depends_on = [
     google_project_service.api,
     google_container_cluster.gke,
-    google_container_node_pool.general
+    google_container_node_pool.general,
+    google_clouddeploy_custom_target_type.gke_helm
   ]
 }
 

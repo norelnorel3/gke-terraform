@@ -2,21 +2,24 @@ apiVersion: skaffold/v4beta6
 kind: Config
 metadata:
   name: multi-cluster-app
+
+# Standard deploy config (used by custom actions)
 deploy:
   helm:
     releases:
       - name: whereami
-        chartPath: /workspace/source/chart
+        chartPath: chart
         namespace: default
         setValueTemplates:
           clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
+
 profiles:
   - name: config
     deploy:
       helm:
         releases:
           - name: whereami
-            chartPath: /workspace/source/chart
+            chartPath: workspace/source/chart
             namespace: default
             setValueTemplates:
               clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
@@ -25,7 +28,45 @@ profiles:
       helm:
         releases:
           - name: whereami
-            chartPath: /workspace/source/chart
+            chartPath: workspace/source/chart
             namespace: default
             setValueTemplates:
               clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
+
+# Custom actions for Cloud Deploy custom targets
+# These run with deploy_parameters available as CLOUD_DEPLOY_* env vars
+customActions:
+  - name: render-helm
+    containers:
+      - name: render
+        image: us-central1-docker.pkg.dev/cd-image-prod/cd-image/cd
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            echo "=== Deploy Parameters ==="
+            echo "ClusterType: ${CLOUD_DEPLOY_ClusterType}"
+            echo "Profile: ${CLOUD_DEPLOY_profile}"
+            echo "========================="
+            cd /workspace/source
+            skaffold render \
+              --filename=skaffold.yaml \
+              --profile=${CLOUD_DEPLOY_profile} \
+              --output=/workspace/output/manifest.yaml \
+              --offline=true \
+              --digest-source=none
+            echo ""
+            echo "=== Rendered Manifest ==="
+            cat /workspace/output/manifest.yaml
+            echo "========================="
+  - name: deploy-gke
+    containers:
+      - name: deploy
+        image: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            echo "Deploying to cluster: ${CLOUD_DEPLOY_cluster_name} in ${CLOUD_DEPLOY_cluster_location}"
+            gcloud container clusters get-credentials ${CLOUD_DEPLOY_cluster_name} \
+              --zone=${CLOUD_DEPLOY_cluster_location} \
+              --project=${CLOUD_DEPLOY_project}
+            kubectl apply -f /workspace/input/manifest.yaml
