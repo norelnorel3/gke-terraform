@@ -9,7 +9,7 @@ deploy:
         chartPath: /workspace/source/chart
         namespace: default
         setValueTemplates:
-          clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
+          clusterType: "{{.CLOUD_DEPLOY_clusterType}}"
 profiles:
   # Profile for config cluster
   - name: config
@@ -21,7 +21,7 @@ profiles:
             namespace: default
             # Read ClusterType from Cloud Deploy's deployParameters (not hardcoded)
             setValueTemplates:
-              clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
+              clusterType: "{{.CLOUD_DEPLOY_clusterType}}"
   # Profile for member cluster
   - name: member
     deploy:
@@ -32,4 +32,4 @@ profiles:
             namespace: default
             # Read ClusterType from Cloud Deploy's deployParameters (not hardcoded)
             setValueTemplates:
-              clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
+              clusterType: "{{.CLOUD_DEPLOY_clusterType}}"

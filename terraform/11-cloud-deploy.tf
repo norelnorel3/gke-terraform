@@ -35,7 +35,7 @@ resource "google_clouddeploy_target" "config_cluster" {
   }
 
   deploy_parameters = {
-    "ClusterType" = "config"
+    "clusterType" = "config"
   }
 
   require_approval = false
@@ -59,7 +59,7 @@ resource "google_clouddeploy_target" "member_cluster" {
   }
 
   deploy_parameters = {
-    "ClusterType" = "member"
+    "clusterType" = "member"
   }
 
   require_approval = false
@@ -86,6 +86,17 @@ resource "google_project_iam_member" "clouddeploy_container_developer" {
 resource "google_project_iam_member" "clouddeploy_logs" {
   project = local.project_id
   role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.api
+  ]
+}
+
+# IAM: Grant Cloud Deploy service account permission to access storage (for artifacts)
+resource "google_project_iam_member" "clouddeploy_storage" {
+  project = local.project_id
+  role    = "roles/storage.admin"
   member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 
   depends_on = [

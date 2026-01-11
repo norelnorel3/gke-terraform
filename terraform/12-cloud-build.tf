@@ -30,7 +30,8 @@ resource "google_cloudbuild_trigger" "deploy_trigger" {
         "-c",
         <<-EOT
           cd cloud-deploy && \
-          gcloud deploy releases create release-$SHORT_SHA \
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S) && \
+          gcloud deploy releases create release-$$TIMESTAMP \
             --project=${local.project_id} \
             --region=${local.region} \
             --delivery-pipeline=${google_clouddeploy_delivery_pipeline.multi_cluster_app.name} \
