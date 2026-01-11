@@ -71,16 +71,21 @@ customActions:
             chmod +x /usr/local/bin/helm
             echo "Helm version: $(helm version --short)"
             
+            # Export deploy parameters as environment variables
+            export CLOUD_DEPLOY_ClusterType="${ClusterType}"
+            export CLOUD_DEPLOY_profile="${profile}"
+            
             # Render
             mkdir -p /workspace/output
             echo "Running skaffold render with profile: ${profile}"
+            echo "CLOUD_DEPLOY_ClusterType=${CLOUD_DEPLOY_ClusterType}"
             skaffold render \
               --filename=/workspace/source/skaffold.yaml \
               --profile=${profile} \
               --output=/workspace/output/manifest.yaml \
               --offline=true \
               --digest-source=none \
-              --set clusterType=${ClusterType}
+              --set clusterType="${CLOUD_DEPLOY_ClusterType}"
             
             echo "=== Rendered Manifest ==="
             cat /workspace/output/manifest.yaml
