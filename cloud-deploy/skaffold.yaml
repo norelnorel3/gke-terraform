@@ -120,9 +120,10 @@ customActions:
             echo "========================="
             
             # Download manifest from GCS (from render output)
-            echo "Downloading manifest from: ${CLOUD_DEPLOY_INPUT_GCS_PATH}"
+            # CLOUD_DEPLOY_INPUT_GCS_PATH points to the render output directory
+            echo "Downloading manifest from: ${CLOUD_DEPLOY_INPUT_GCS_PATH}/manifest.yaml"
             mkdir -p /workspace/input
-            gsutil cp "${CLOUD_DEPLOY_INPUT_GCS_PATH}" /workspace/input/manifest.yaml
+            gsutil cp "${CLOUD_DEPLOY_INPUT_GCS_PATH}/manifest.yaml" /workspace/input/manifest.yaml
             
             echo "=== Manifest to deploy ==="
             cat /workspace/input/manifest.yaml
