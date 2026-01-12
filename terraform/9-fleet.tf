@@ -37,6 +37,7 @@ resource "google_gke_hub_feature" "multiclusterservicediscovery" {
   location = "global"
   project  = local.project_id
 
+
   depends_on = [
     google_project_service.api,
     google_gke_hub_membership.cluster_membership
@@ -49,6 +50,7 @@ resource "google_gke_hub_feature" "multiclusteringress" {
   name     = "multiclusteringress"
   location = "global"
   project  = local.project_id
+
 
   spec {
     multiclusteringress {
