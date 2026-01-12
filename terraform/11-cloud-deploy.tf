@@ -49,6 +49,24 @@ resource "google_clouddeploy_target" "cluster" {
   ]
 }
 
+# Multi-target that groups all cluster targets for parallel deployment
+resource "google_clouddeploy_target" "multi_cluster" {
+  name        = "multi-cluster"
+  location    = local.region
+  project     = local.project_id
+  description = "Multi-target for parallel deployment to all clusters"
+
+  multi_target {
+    target_ids = [for k, v in google_clouddeploy_target.cluster : v.name]
+  }
+
+  require_approval = false
+
+  depends_on = [
+    google_clouddeploy_target.cluster
+  ]
+}
+
 # Cloud Deploy Delivery Pipeline for Multi-Cluster Deployment
 resource "google_clouddeploy_delivery_pipeline" "multi_cluster_app" {
   name        = "multi-cluster-app"
@@ -57,13 +75,9 @@ resource "google_clouddeploy_delivery_pipeline" "multi_cluster_app" {
   description = "Pipeline for deploying to multi-cluster GKE environment"
 
   serial_pipeline {
-    # Dynamic stages - order is defined in local.deploy_stages list
-    dynamic "stages" {
-      for_each = local.deploy_stages
-      content {
-        target_id = google_clouddeploy_target.cluster[stages.value.key].name
-        profiles  = [stages.value.profile]
-      }
+    stages {
+      target_id = google_clouddeploy_target.multi_cluster.name
+      # No profiles needed - each child target uses its own deploy_parameters
     }
   }
 
@@ -71,7 +85,8 @@ resource "google_clouddeploy_delivery_pipeline" "multi_cluster_app" {
     google_project_service.api,
     google_container_cluster.gke,
     google_container_node_pool.general,
-    google_clouddeploy_target.cluster
+    google_clouddeploy_target.cluster,
+    google_clouddeploy_target.multi_cluster
   ]
 }
 
@@ -126,8 +141,13 @@ output "cloud_deploy_pipeline" {
 }
 
 output "cloud_deploy_targets" {
-  description = "Cloud Deploy targets"
+  description = "Cloud Deploy child targets"
   value       = { for k, v in google_clouddeploy_target.cluster : k => v.name }
+}
+
+output "cloud_deploy_multi_target" {
+  description = "Cloud Deploy multi-target (deploys to all clusters in parallel)"
+  value       = google_clouddeploy_target.multi_cluster.name
 }
 
 output "cloud_deploy_create_release_command" {
