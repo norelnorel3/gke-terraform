@@ -39,7 +39,8 @@ customActions:
   - name: render-helm
     containers:
       - name: render
-        image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+        # Custom lightweight image - build with: cd images && ./build-and-push.sh
+        image: us-central1-docker.pkg.dev/norel-project-480112/cloud-deploy-images/render:latest
         command: ["/bin/bash", "-c"]
         args:
           - |
@@ -57,19 +58,6 @@ customActions:
             echo "=== Source contents ==="
             ls -la /workspace/source/
             echo "======================="
-            
-            # Install skaffold
-            echo "Installing skaffold..."
-            curl -sLo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/v2.16.1/skaffold-linux-amd64
-            chmod +x /usr/local/bin/skaffold
-            
-            # Install helm (direct download - more reliable than get-helm-3 script)
-            echo "Installing helm..."
-            curl -sLo /tmp/helm.tar.gz https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz
-            tar -xzf /tmp/helm.tar.gz -C /tmp
-            mv /tmp/linux-amd64/helm /usr/local/bin/helm
-            chmod +x /usr/local/bin/helm
-            echo "Helm version: $(helm version --short)"
             
             # Export deploy parameters as environment variables
             export CLOUD_DEPLOY_ClusterType="${ClusterType}"
@@ -108,7 +96,8 @@ customActions:
   - name: deploy-gke
     containers:
       - name: deploy
-        image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+        # Custom lightweight image - build with: cd images && ./build-and-push.sh
+        image: us-central1-docker.pkg.dev/norel-project-480112/cloud-deploy-images/deploy:latest
         command: ["/bin/bash", "-c"]
         args:
           - |
