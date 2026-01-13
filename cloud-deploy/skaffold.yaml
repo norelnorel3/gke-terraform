@@ -36,7 +36,9 @@ customActions:
             
             # Upload results
             gsutil cp /workspace/output/manifest.yaml "${CLOUD_DEPLOY_OUTPUT_GCS_PATH}/manifest.yaml"
-            echo '{"resultStatus":"SUCCEEDED","manifestFile":"manifest.yaml"}' > /tmp/results.json
+            cat > /tmp/results.json << EOF
+            {"resultStatus":"SUCCEEDED","manifestFile":"${CLOUD_DEPLOY_OUTPUT_GCS_PATH}/manifest.yaml"}
+            EOF
             gsutil cp /tmp/results.json "${CLOUD_DEPLOY_OUTPUT_GCS_PATH}/results.json"
 
   - name: deploy-gke
