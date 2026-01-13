@@ -10,6 +10,12 @@ resource "google_container_cluster" "gke" {
 
   deletion_protection = false
 
+  # Node config for initial node pool (uses HDD to avoid SSD quota)
+  node_config {
+    disk_size_gb = 30
+    disk_type    = "pd-standard"
+  }
+
   # Increase timeout for cluster creation
   timeouts {
     create = "45m"
@@ -51,7 +57,13 @@ resource "google_container_cluster" "gke" {
   private_cluster_config {
     enable_private_nodes    = true
     enable_private_endpoint = false
-    master_ipv4_cidr_block  = each.key == "cluster1" ? "192.168.0.0/28" : "192.168.1.0/28"
+    # Each cluster needs a unique master CIDR
+    master_ipv4_cidr_block  = {
+      cluster1 = "192.168.0.0/28"
+      cluster2 = "192.168.1.0/28" 
+      cluster3 = "192.168.2.0/28"
+      cluster4 = "192.168.3.0/28"
+    }[each.key]
   }
 
   # Enable Gateway API for multi-cluster gateway

@@ -24,7 +24,7 @@ resource "google_cloudbuild_trigger" "deploy_trigger" {
   # Cloud Build configuration (inline)
   build {
     step {
-      name = "gcr.io/google.com/cloudsdktool/cloud-sdk"
+      name = "gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine"
       entrypoint = "bash"
       args = [
         "-c",

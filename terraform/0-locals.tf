@@ -27,40 +27,29 @@ locals {
 
   state_bucket_name = "${local.project_id}-terraform-state"
 
+  # Clusters configuration - includes GKE cluster info and Cloud Deploy settings
+  # cluster_type is used for both Cloud Deploy target naming and Skaffold profile selection
+  # "config" = deploys Gateway/HTTPRoute + app, "member" = deploys only app
   clusters = {
     cluster1 = {
-      name     = "demo-cluster-1"
-      location = "us-central1-a"
+      name         = "demo-cluster-1"
+      location     = "us-central1-a"
+      cluster_type = "config"
     }
     cluster2 = {
-      name     = "demo-cluster-2"
-      location = "us-central1-b"
+      name         = "demo-cluster-2"
+      location     = "us-central1-b"
+      cluster_type = "member"
     }
+    cluster3 = {
+      name         = "demo-cluster-3"
+      location     = "us-central1-b"
+      cluster_type = "member"
+    }    
+    # cluster4 = {
+    #   name         = "demo-cluster-4"
+    #   location     = "us-central1-a"
+    #   cluster_type = "member"
+    # }     
   }
-
-  # Cloud Deploy targets map - used for creating target resources
-  # clusterType is derived from the key: "config" -> "config", anything else -> "member"
-  deploy_targets = {
-    config = {
-      cluster_key = "cluster1"
-      profile     = "config"
-    }
-    member = {
-      cluster_key = "cluster2"
-      profile     = "member"
-    }
-  }
-
-  # Ordered list for pipeline stages - ORDER MATTERS for serial pipeline
-  # Config cluster must deploy first (Gateway/HTTPRoute), then member clusters
-  deploy_stages = [
-    {
-      key     = "config"
-      profile = "config"
-    },
-    {
-      key     = "member"
-      profile = "member"
-    }
-  ]
 }

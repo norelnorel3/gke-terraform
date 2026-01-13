@@ -18,24 +18,24 @@ resource "google_clouddeploy_custom_target_type" "gke_helm" {
 
 # Cloud Deploy Targets - using custom target type
 resource "google_clouddeploy_target" "cluster" {
-  for_each = local.deploy_targets
+  for_each = local.clusters
 
-  name        = "${each.key}-cluster"
+  name        = each.key  # cluster1, cluster2, cluster3, etc.
   location    = local.region
   project     = local.project_id
-  description = "${title(each.key)} cluster (${local.clusters[each.value.cluster_key].name})"
+  description = "${title(each.value.cluster_type)} cluster (${each.value.name})"
 
   # Use custom target instead of GKE target
   custom_target {
     custom_target_type = google_clouddeploy_custom_target_type.gke_helm.id
   }
 
-  # These parameters become CLOUD_DEPLOY_* env vars in custom actions
+  # These parameters become env vars in custom actions
   deploy_parameters = {
-    "ClusterType"      = each.key == "config" ? "config" : "member"
-    "profile"          = each.value.profile
-    "cluster_name"     = local.clusters[each.value.cluster_key].name
-    "cluster_location" = local.clusters[each.value.cluster_key].location
+    "ClusterType"      = each.value.cluster_type
+    "profile"          = each.value.cluster_type  # Same as ClusterType - used for Skaffold profile
+    "cluster_name"     = each.value.name
+    "cluster_location" = each.value.location
     "project"          = local.project_id
   }
 

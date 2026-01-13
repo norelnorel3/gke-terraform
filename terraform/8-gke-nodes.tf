@@ -39,6 +39,10 @@ resource "google_container_node_pool" "general" {
   node_config {
     preemptible  = false
     machine_type = "e2-medium"
+    
+    # Use smaller disk to save SSD quota (default is 100GB)
+    disk_size_gb = 30
+    disk_type    = "pd-standard"  # Use HDD instead of SSD to avoid SSD quota
 
     labels = {
       role = "general"
