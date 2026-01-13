@@ -107,7 +107,7 @@ customActions:
   - name: deploy-gke
     containers:
       - name: deploy
-        image: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+        image: gcr.io/google.com/cloudsdktool/cloud-sdk
         command: ["/bin/bash", "-c"]
         args:
           - |
@@ -117,10 +117,6 @@ customActions:
             echo "cluster_location: ${cluster_location}"
             echo "project: ${project}"
             echo "========================="
-            
-            # Install kubectl and gke-gcloud-auth-plugin
-            echo "Installing kubectl..."
-            gcloud components install kubectl gke-gcloud-auth-plugin --quiet
             
             # Download manifest from GCS (from render output)
             # CLOUD_DEPLOY_INPUT_GCS_PATH points to the render output directory
