@@ -1,3 +1,16 @@
+# Artifact Registry repository for custom Cloud Deploy images
+resource "google_artifact_registry_repository" "cloud_deploy_images" {
+  repository_id = "cloud-deploy-images"
+  location      = local.region
+  project       = local.project_id
+  format        = "DOCKER"
+  description   = "Custom images for Cloud Deploy custom actions"
+
+  depends_on = [
+    google_project_service.api
+  ]
+}
+
 # Custom Target Type for GKE with Helm
 # This allows deploy_parameters to be available as CLOUD_DEPLOY_* env vars
 resource "google_clouddeploy_custom_target_type" "gke_helm" {
@@ -128,6 +141,17 @@ resource "google_service_account_iam_member" "clouddeploy_service_account_user" 
   service_account_id = "projects/${local.project_id}/serviceAccounts/${data.google_project.project.number}-compute@developer.gserviceaccount.com"
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.api
+  ]
+}
+
+# IAM: Grant Cloud Deploy service account permission to pull images from Artifact Registry
+resource "google_project_iam_member" "clouddeploy_artifact_registry" {
+  project = local.project_id
+  role    = "roles/artifactregistry.reader"
+  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 
   depends_on = [
     google_project_service.api

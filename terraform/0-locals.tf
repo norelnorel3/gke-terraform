@@ -15,7 +15,8 @@ locals {
     "trafficdirector.googleapis.com",
     "dns.googleapis.com",
     "clouddeploy.googleapis.com",
-    "cloudbuild.googleapis.com"
+    "cloudbuild.googleapis.com",
+    "artifactregistry.googleapis.com"
   ]
 
   # GitHub repository configuration
