@@ -3,38 +3,9 @@ kind: Config
 metadata:
   name: multi-cluster-app
 
-# Standard deploy config (used by custom actions)
-deploy:
-  helm:
-    releases:
-      - name: whereami
-        chartPath: chart
-        namespace: default
-        setValueTemplates:
-          clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
-
-profiles:
-  - name: config
-    deploy:
-      helm:
-        releases:
-          - name: whereami
-            chartPath: /workspace/source/chart
-            namespace: default
-            setValueTemplates:
-              clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
-  - name: member
-    deploy:
-      helm:
-        releases:
-          - name: whereami
-            chartPath: /workspace/source/chart
-            namespace: default
-            setValueTemplates:
-              clusterType: "{{.CLOUD_DEPLOY_ClusterType}}"
-
 # Custom actions for Cloud Deploy custom targets
-# These run with deploy_parameters available as CLOUD_DEPLOY_* env vars
+# Cloud Deploy requires separate render and deploy actions
+# Deploy parameters are passed as environment variables (ClusterType, cluster_name, etc.)
 customActions:
   - name: render-helm
     containers:
@@ -43,67 +14,31 @@ customActions:
         command: ["/bin/bash", "-c"]
         args:
           - |
-            echo "=== Deploy Parameters ==="
-            echo "ClusterType: ${ClusterType}"
-            echo "profile: ${profile}"
-            echo "========================="
+            set -e
+            echo "=== Render: ${ClusterType} ==="
             
-            # Download source from GCS
-            echo "Downloading source from: ${CLOUD_DEPLOY_INPUT_GCS_PATH}"
-            mkdir -p /workspace/source
+            # Download source
             gsutil cp "${CLOUD_DEPLOY_INPUT_GCS_PATH}" /tmp/source.tgz
-            tar -xzf /tmp/source.tgz -C /workspace/source
-            
-            echo "=== Source contents ==="
-            ls -la /workspace/source/
-            echo "======================="
-            
-            # Install skaffold
-            echo "Installing skaffold..."
-            curl -sLo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/v2.16.1/skaffold-linux-amd64
-            chmod +x /usr/local/bin/skaffold
+            mkdir -p /workspace/source && tar -xzf /tmp/source.tgz -C /workspace/source
             
             # Install helm
-            echo "Installing helm..."
-            curl -sLo /tmp/helm.tar.gz https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz
-            tar -xzf /tmp/helm.tar.gz -C /tmp
+            curl -sL https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz | tar -xzC /tmp
             mv /tmp/linux-amd64/helm /usr/local/bin/helm
-            chmod +x /usr/local/bin/helm
             
-            # Export deploy parameters as environment variables
-            export CLOUD_DEPLOY_ClusterType="${ClusterType}"
-            export CLOUD_DEPLOY_profile="${profile}"
-            
-            # Render
+            # Render with helm template (no skaffold needed)
             mkdir -p /workspace/output
-            echo "Running skaffold render with profile: ${profile}"
-            echo "CLOUD_DEPLOY_ClusterType=${CLOUD_DEPLOY_ClusterType}"
-            skaffold render \
-              --filename=/workspace/source/skaffold.yaml \
-              --profile=${profile} \
-              --output=/workspace/output/manifest.yaml \
-              --offline=true \
-              --digest-source=none \
-              --set clusterType="${CLOUD_DEPLOY_ClusterType}"
+            helm template whereami /workspace/source/chart \
+              --namespace default \
+              --set clusterType="${ClusterType}" \
+              > /workspace/output/manifest.yaml
             
-            echo "=== Rendered Manifest ==="
-            cat /workspace/output/manifest.yaml
-            echo "========================="
+            echo "=== Rendered Manifest ===" && cat /workspace/output/manifest.yaml && echo "========================="
             
-            # Upload results to GCS (required for custom targets)
-            echo "Uploading results to: ${CLOUD_DEPLOY_OUTPUT_GCS_PATH}"
+            # Upload results
             gsutil cp /workspace/output/manifest.yaml "${CLOUD_DEPLOY_OUTPUT_GCS_PATH}/manifest.yaml"
-            
-            # Create and upload results.json
-            cat > /tmp/results.json << EOF
-            {
-              "resultStatus": "SUCCEEDED",
-              "manifestFile": "${CLOUD_DEPLOY_OUTPUT_GCS_PATH}/manifest.yaml"
-            }
-            EOF
+            echo '{"resultStatus":"SUCCEEDED","manifestFile":"manifest.yaml"}' > /tmp/results.json
             gsutil cp /tmp/results.json "${CLOUD_DEPLOY_OUTPUT_GCS_PATH}/results.json"
-            
-            echo "Render complete!"
+
   - name: deploy-gke
     containers:
       - name: deploy
@@ -112,39 +47,17 @@ customActions:
         args:
           - |
             set -e
-            echo "=== Deploy Parameters ==="
-            echo "cluster_name: ${cluster_name}"
-            echo "cluster_location: ${cluster_location}"
-            echo "project: ${project}"
-            echo "========================="
+            echo "=== Deploy to ${cluster_name} ==="
             
-            # Download manifest from GCS (from render output)
-            # CLOUD_DEPLOY_INPUT_GCS_PATH points to the render output directory
-            echo "Downloading manifest from: ${CLOUD_DEPLOY_INPUT_GCS_PATH}/manifest.yaml"
-            mkdir -p /workspace/input
-            gsutil cp "${CLOUD_DEPLOY_INPUT_GCS_PATH}/manifest.yaml" /workspace/input/manifest.yaml
+            # Download manifest
+            gsutil cp "${CLOUD_DEPLOY_INPUT_GCS_PATH}/manifest.yaml" /tmp/manifest.yaml
             
-            echo "=== Manifest to deploy ==="
-            cat /workspace/input/manifest.yaml
-            echo "=========================="
-            
-            # Get cluster credentials
-            echo "Getting cluster credentials..."
+            # Get credentials and apply
             gcloud container clusters get-credentials ${cluster_name} \
-              --zone=${cluster_location} \
-              --project=${project}
+              --zone=${cluster_location} --project=${project}
+            kubectl apply -f /tmp/manifest.yaml
             
-            # Apply
-            echo "Applying manifests..."
-            kubectl apply -f /workspace/input/manifest.yaml
-            
-            # Upload results.json
-            echo "Uploading results..."
-            cat > /tmp/results.json << EOF
-            {
-              "resultStatus": "SUCCEEDED"
-            }
-            EOF
+            # Upload results
+            echo '{"resultStatus":"SUCCEEDED"}' > /tmp/results.json
             gsutil cp /tmp/results.json "${CLOUD_DEPLOY_OUTPUT_GCS_PATH}/results.json"
-            
-            echo "Deploy complete!"
+            echo "=== Deploy complete ==="
